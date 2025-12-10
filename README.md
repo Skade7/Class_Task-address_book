@@ -69,13 +69,13 @@ cd address_book
 ```bash
 pip install -r requirements.txt
 ```
-###3. 运行程序
+### 3. 运行程序
 
 ```bash
 python app.py
 ```
 
-###4. 访问应用
+### 4. 访问应用
 打开浏览器，访问：
 
 ```bash
