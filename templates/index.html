@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}首页{% endblock %}
+
+{% block content %}
+<div class="profile">
+    <h3>我的头像</h3>
+    <img src="{{ url_for('static', filename='uploads/' + (current_user.avatar or 'default.png')) }}" 
+         alt="头像" class="profile-avatar">
+    <form action="{{ url_for('upload_avatar') }}" method="POST" enctype="multipart/form-data">
+        <input type="file" name="avatar" accept="image/*">
+        <button type="submit" class="btn">上传头像</button>
+    </form>
+</div>
+
+<div class="search-bar">
+    <form method="GET">
+        <input type="text" name="search" placeholder="搜索姓名..." value="{{ request.args.get('search', '') }}">
+        <button type="submit" class="btn">搜索</button>
+        <a href="{{ url_for('index', bookmarked=1) }}" class="btn">仅显示收藏</a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">显示全部</a>
+    </form>
+</div>
+
+<div class="contact-form card">
+    <h3 class="section-title">{% if edit_id %}编辑联系人{% else %}添加联系人{% endif %}</h3>
+
+    <form method="POST" action="{{ url_for('edit_contact', contact_id=edit_id) if edit_id else url_for('add_contact') }}">
+        <input type="hidden" name="csrf_token" value="{{ (edit_form if edit_id else form).csrf_token._value() }}">
+
+        <!-- 姓名 -->
+        <div class="form-group">
+            <label>姓名</label>
+            <input name="name" class="input-text" value="{{ edit_contact.name if edit_contact else '' }}" required>
+        </div>
+
+        <!-- 多联系方式 -->
+        <div id="methods-container">
+            {% if edit_contact %}
+                {% for m in edit_contact.methods %}
+                <div class="method-row">
+                    <select name="method_type[]" class="method-select">
+                        <option value="phone" {% if m.type=='phone' %}selected{% endif %}>phone</option>
+                        <option value="email" {% if m.type=='email' %}selected{% endif %}>email</option>
+                        <option value="social" {% if m.type=='social' %}selected{% endif %}>social</option>
+                        <option value="address" {% if m.type=='address' %}selected{% endif %}>address</option>
+                    </select>
+                    <input type="text" name="method_value[]" class="input-text" value="{{ m.value }}">
+                    <button type="button" class="btn btn-danger remove-method">删除</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="method-row">
+                    <select name="method_type[]" class="method-select">
+                        <option value="phone">phone</option>
+                        <option value="email">email</option>
+                        <option value="social">social</option>
+                        <option value="address">address</option>
+                    </select>
+                    <input type="text" name="method_value[]" class="input-text" placeholder="值">
+                    <button type="button" class="btn btn-danger remove-method">删除</button>
+                </div>
+            {% endif %}
+        </div>
+
+        <button type="button" id="add-method" class="btn btn-secondary" style="margin-top:10px;">+ 添加联系方式</button>
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary">保存</button>
+            {% if edit_id %}
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">取消</a>
+            {% endif %}
+        </div>
+
+    </form>
+</div>
+
+<div class="excel-section card">
+    <h3 class="section-title">Excel 导入 / 导出</h3>
+
+    <div class="excel-controls">
+        <form action="{{ url_for('import_contacts') }}" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" class="file-input" accept=".xlsx,.xls" required>
+            <button type="submit" class="btn btn-primary">导入联系人</button>
+        </form>
+
+        <a href="{{ url_for('export_contacts') }}" class="btn btn-primary">导出联系人</a>
+    </div>
+</div>
+
+<div class="contact-list">
+    <h3>联系人列表 ({{ contacts|length }})</h3>
+    {% if contacts %}
+        <table>
+            <thead>
+                <tr>
+                    <th>姓名</th>
+                    <th>联系方式</th>
+                    <th>收藏</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact in contacts %}
+                <tr>
+                    <td>{{ contact.name }}</td>
+                    <td>
+                        <ul>
+                        {% for m in contact.methods %}
+                            <li><strong>{{ m.type }}:</strong> {{ m.value }}</li>
+                        {% endfor %}
+                        </ul>
+                    </td>
+                    <td style="text-align:center;">
+                        {% if contact.bookmarked %}
+                            <a href="{{ url_for('toggle_bookmark', contact_id=contact.id) }}" class="btn" title="取消收藏">★</a>
+                        {% else %}
+                            <a href="{{ url_for('toggle_bookmark', contact_id=contact.id) }}" class="btn" title="收藏">☆</a>
+                        {% endif %}
+                    </td>
+                    <td class="actions">
+                        <a href="{{ url_for('edit_contact', contact_id=contact.id) }}" class="btn btn-sm">编辑</a>
+                        <a href="{{ url_for('delete_contact', contact_id=contact.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？')">删除</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="empty-message">暂无联系人，添加一个吧！</p>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('click', function(e){
+    if (e.target && e.target.id === 'add-method') {
+        const container = document.getElementById('methods-container');
+        const div = document.createElement('div');
+        div.className = 'method-row';
+        div.innerHTML = `
+            <select name="method_type[]">
+                <option value="phone">phone</option>
+                <option value="email">email</option>
+                <option value="social">social</option>
+                <option value="address">address</option>
+            </select>
+            <input type="text" name="method_value[]" class="form-control" placeholder="值">
+            <button type="button" class="btn btn-sm remove-method">删除</button>
+        `;
+        container.appendChild(div);
+    }
+    if (e.target && e.target.classList.contains('remove-method')) {
+        const row = e.target.closest('.method-row');
+        if (row) row.remove();
+    }
+});
+</script>
+
+{% endblock %}
