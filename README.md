@@ -50,28 +50,37 @@ address_book/
 ├── app.py                 # Flask 主程序入口
 ├── requirements.txt       # 项目依赖库列表
 └── README.md              # 项目说明文档
+```
 
-🚀 快速开始 (Installation & Setup)
+## 🚀 快速开始 (Installation & Setup)
+
 请按照以下步骤在本地运行本项目：
 
-1. 克隆或下载项目
+### 1. 克隆或下载项目
 
+```bash
 git clone https://github.com/你的用户名/address_book.git
 cd address_book
+```
 
-2. 安装依赖
+### 2. 安装依赖
 建议使用 Python 3.8 或以上版本。
 
+```bash
 pip install -r requirements.txt
-
+```
 3. 运行程序
 
+```bash
 python app.py
+```
 
 4. 访问应用
 打开浏览器，访问：
 
+```bash
 http://127.0.0.1:5000
+```
 
 提示：首次运行时，你可以直接在注册页面注册一个新账号开始使用。数据库文件包含在 instance/ 文件夹中，如果你想重置数据，可以删除该文件，重启程序后会自动重新生成。
 📝 Excel 导入模版说明
